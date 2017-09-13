@@ -5,13 +5,25 @@
     using System.Reflection;
     using Microsoft.CodeAnalysis;
     using Microsoft.CodeAnalysis.CSharp;
+    using Microsoft.CodeAnalysis.Text;
 
-    public class CSharpCompiler
+    internal class CSharpCompiler
     {
-        public static CSharpCompilation Compile(string assemblyName, string code, TextWriter errorWriter)
+        public static CSharpSyntaxTree ParseText(string code)
         {
-            var syntaxTree = CSharpSyntaxTree.ParseText(code);
+            return (CSharpSyntaxTree)CSharpSyntaxTree.ParseText(code);
+        }
 
+        public static CSharpSyntaxTree ParseFrom(string filepath)
+        {
+            using (var stream = File.OpenRead(filepath))
+            {
+                return (CSharpSyntaxTree)CSharpSyntaxTree.ParseText(SourceText.From(stream), path: filepath);
+            }
+        }
+
+        public static CSharpCompilation Compile(string assemblyName, CSharpSyntaxTree syntaxTree)
+        {
             var references = new MetadataReference[]
             {
                 MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
@@ -27,24 +39,12 @@
             using (var ms = new MemoryStream())
             {
                 var result = compilation.Emit(ms);
+                if (!result.Success)
+                    throw new CompilationException(result.Diagnostics);
 
-                if (result.Success)
-                {
-                    Assembly.Load(ms.ToArray());
+                Assembly.Load(ms.ToArray());
 
-                    return compilation;
-                }
-
-                var failures = result.Diagnostics.Where(diagnostic =>
-                    diagnostic.IsWarningAsError ||
-                    diagnostic.Severity == DiagnosticSeverity.Error);
-
-                foreach (var diagnostic in failures)
-                {
-                    errorWriter.WriteLine($"{diagnostic.Severity} {diagnostic.Id}: {diagnostic.GetMessage()}");
-                }
-
-                return null;
+                return compilation;
             }
         }
     }

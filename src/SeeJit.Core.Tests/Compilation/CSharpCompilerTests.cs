@@ -1,6 +1,5 @@
 ﻿namespace SeeJit.Tests.Compilation
 {
-    using System.IO;
     using SeeJit.Compilation;
     using Xunit;
 
@@ -10,24 +9,19 @@
         public void CompilePassed()
         {
             var code = "class TestClass { void TestMethod() { var i = 0; } }";
-            var errorWriter = new StringWriter();
 
-            Assert.NotNull(CSharpCompiler.Compile("test.dll", code, errorWriter));
-            Assert.Equal("", errorWriter.ToString());
+            Assert.NotNull(CSharpCompiler.Compile("test.dll", CSharpCompiler.ParseText(code)));
         }
 
         [Fact]
         public void CompileFailed()
         {
             var code = "class TestClass { void TestMethod() { var i = 0 } }";
-            var errorWriter = new StringWriter();
 
-            Assert.Null(CSharpCompiler.Compile("test.dll", code, errorWriter));
+            var ex = Assert.Throws<CompilationException>(() => CSharpCompiler.Compile("test.dll", CSharpCompiler.ParseText(code)));
 
-            var errorMessage = errorWriter.ToString();
-
-            Assert.Contains("Error", errorMessage);
-            Assert.Contains("; expected", errorMessage);
+            Assert.Contains("Error", ex.Message);
+            Assert.Contains("; expected", ex.Message);
         }
     }
 }

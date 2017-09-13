@@ -2,7 +2,6 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.IO;
     using System.Linq;
     using System.Reflection;
     using Microsoft.CodeAnalysis.CSharp;
@@ -218,14 +217,9 @@ class MyClass {
             private static List<TreeItem<MemberInfo>> Collect(string code)
             {
                 var assemblyName = Guid.NewGuid() + ".dll";
-                var errorWriter = new StringWriter();
-
-                var compilation = CSharpCompiler.Compile(assemblyName, code, errorWriter);
-                if (compilation == null)
-                    throw new Exception(errorWriter.ToString());
-
+                var syntaxTree = CSharpCompiler.ParseText(code);
+                var compilation = CSharpCompiler.Compile(assemblyName, syntaxTree);
                 var assembly = AppDomain.CurrentDomain.GetAssemblies().Single(a => a.GetName().Name == assemblyName);
-                var syntaxTree = compilation.SyntaxTrees[0];
                 var syntaxItems = CSharpHelper.CollectSyntax(syntaxTree.GetRoot());
 
                 return CSharpHelper.CollectMembers(assembly, compilation.GetSemanticModel(syntaxTree), syntaxItems);
