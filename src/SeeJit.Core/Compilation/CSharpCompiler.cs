@@ -8,7 +8,7 @@
 
     public class CSharpCompiler
     {
-        public static SemanticModel Compile(string assemblyName, string code, TextWriter errorWriter)
+        public static CSharpCompilation Compile(string assemblyName, string code, TextWriter errorWriter)
         {
             var syntaxTree = CSharpSyntaxTree.ParseText(code);
 
@@ -32,7 +32,7 @@
                 {
                     Assembly.Load(ms.ToArray());
 
-                    return compilation.GetSemanticModel(syntaxTree);
+                    return compilation;
                 }
 
                 var failures = result.Diagnostics.Where(diagnostic =>
