@@ -35,7 +35,7 @@
 
             writer.Write("; Compiling ... ");
 
-            var assemblyName = $"{Path.GetFileName(options.FilePath)}-{Guid.NewGuid()}.dll";
+            var assemblyName = Path.GetFileNameWithoutExtension(options.FilePath);
             var compilation = CSharpCompiler.Compile(assemblyName, syntaxTree, options.DisableOptimization);
             var compiled = DateTime.Now;
 
@@ -46,7 +46,7 @@
             writer.Write("; Analyzing ... ");
 
             var syntaxItems = CSharpHelper.CollectSyntax(syntaxTree.GetRoot());
-            var assembly = AppDomain.CurrentDomain.GetAssemblies().First(a => a.GetName().Name == assemblyName);
+            var assembly = AppDomain.CurrentDomain.GetAssemblies().Last(a => a.GetName().Name == assemblyName);
             var semanticModel = compilation.GetSemanticModel(syntaxTree);
             var memberItems = CSharpHelper.CollectMembers(assembly, semanticModel, syntaxItems);
             var disassemblers = memberItems.Select(Disassembler.Create).ToList();

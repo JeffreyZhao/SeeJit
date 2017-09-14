@@ -216,7 +216,7 @@ class MyClass {
         {
             private static List<TreeItem<MemberInfo>> Collect(string code)
             {
-                var assemblyName = Guid.NewGuid() + ".dll";
+                var assemblyName = Guid.NewGuid().ToString();
                 var syntaxTree = CSharpCompiler.ParseText(code);
                 var compilation = CSharpCompiler.Compile(assemblyName, syntaxTree);
                 var assembly = AppDomain.CurrentDomain.GetAssemblies().Single(a => a.GetName().Name == assemblyName);
