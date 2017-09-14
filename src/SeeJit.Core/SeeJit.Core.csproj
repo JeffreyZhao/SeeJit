@@ -14,6 +14,8 @@
   
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" version="2.3.1" />
+    <PackageReference Include="Microsoft.Diagnostics.Runtime" Version="0.9.170809.3" />
+    <PackageReference Include="SharpDisasm" Version="1.1.5" />
   </ItemGroup>
   
   <ItemGroup>
