@@ -22,7 +22,7 @@
             }
         }
 
-        public static CSharpCompilation Compile(string assemblyName, CSharpSyntaxTree syntaxTree)
+        public static CSharpCompilation Compile(string assemblyName, CSharpSyntaxTree syntaxTree, bool disableOptimization = false)
         {
             var references = new MetadataReference[]
             {
@@ -30,11 +30,13 @@
                 MetadataReference.CreateFromFile(typeof(Enumerable).Assembly.Location)
             };
 
+            var optimizationLevel = disableOptimization ? OptimizationLevel.Debug : OptimizationLevel.Release;
+
             var compilation = CSharpCompilation.Create(
                 assemblyName,
                 new[] { syntaxTree },
                 references,
-                new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+                new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, optimizationLevel : optimizationLevel));
 
             using (var ms = new MemoryStream())
             {

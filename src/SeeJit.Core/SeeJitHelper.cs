@@ -36,7 +36,7 @@
             writer.Write("; Compiling ... ");
 
             var assemblyName = $"{Path.GetFileName(options.FilePath)}-{Guid.NewGuid()}.dll";
-            var compilation = CSharpCompiler.Compile(assemblyName, syntaxTree);
+            var compilation = CSharpCompiler.Compile(assemblyName, syntaxTree, options.DisableOptimization);
             var compiled = DateTime.Now;
 
             writer.WriteLine($"done. ({Diff(parsed, compiled)})");
@@ -131,5 +131,7 @@
     public class DisassembleFileOptions : DisassembleOptions
     {
         public string FilePath { get; set; }
+
+        public bool DisableOptimization { get; set; }
     }
 }

@@ -17,6 +17,7 @@
             var fileOptions = new DisassembleFileOptions
             {
                 FilePath = options.FilePath,
+                DisableOptimization = options.DisableOptimization,
                 IsVerbose = options.IsVerbose
             };
 
@@ -37,6 +38,9 @@
     {
         [Option('f', "file", Required = true, HelpText = "Source file to be compiled and disassembled.")]
         public string FilePath { get; set; }
+
+        [Option('d', "disable-optimization", HelpText = "Disable optimization when compiling source file.")]
+        public bool DisableOptimization { get; set; }
 
         [Option('v', "verbose", HelpText = "Print verbose messages.")]
         public bool IsVerbose { get; set; }
