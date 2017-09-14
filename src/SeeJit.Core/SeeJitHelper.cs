@@ -17,11 +17,6 @@
             var begin = DateTime.Now;
             var writer = options.IsVerbose ? MessageWriter.From(output) : MessageWriter.Empty;
 
-            if (!options.IsVerbose)
-            {
-                output.Write("; Processing ... ");
-            }
-
             // Parsing
 
             writer.Write("; Parsing from file ... ");
@@ -53,11 +48,7 @@
             var analyzed = DateTime.Now;
 
             writer.WriteLine($"done. ({Diff(compiled, analyzed)})");
-
-            if (!options.IsVerbose)
-            {
-                output.WriteLine($"done. ({Diff(begin, analyzed)})");
-            }
+            writer.WriteLine("");
 
             return disassemblers;
         }
@@ -79,7 +70,14 @@
 
             using (var dt = DataTarget.AttachToProcess(Process.GetCurrentProcess().Id, UInt32.MaxValue, AttachFlag.Passive))
             {
-                var runtime = dt.ClrVersions.Single().CreateRuntime();
+                var clr = dt.ClrVersions.Single();
+
+                output.WriteLine(
+                    "; {0:G} CLR {1} ({2}) on {3}.",
+                    clr.Flavor, clr.Version, Path.GetFileName(clr.ModuleInfo.FileName), clr.DacInfo.TargetArchitecture.ToString("G").ToLowerInvariant()
+                );
+
+                var runtime = clr.CreateRuntime();
 
                 foreach (var disasm in disassemblers)
                 {
