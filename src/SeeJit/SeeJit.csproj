@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net47</TargetFramework>
+    <Company>Jeffrey Zhao</Company>
+    <Authors>Jeffrey Zhao</Authors>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <Version>0.1.0</Version>
+    <Description>Dump JIT compiled result for .NET from source code or binary file.</Description>
+    <Copyright>Copyright © Jeffrey Zhao 2017</Copyright>
+    <RepositoryUrl>https://github.com/jeffreyzhao/SeeJit</RepositoryUrl>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommandLineParser21" Version="2.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SeeJit.Core\SeeJit.Core.csproj" />
+  </ItemGroup>
+
+</Project>

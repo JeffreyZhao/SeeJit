@@ -11,6 +11,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{B402C577
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SeeJit.Core.Tests", "SeeJit.Core.Tests\SeeJit.Core.Tests.csproj", "{C8632330-C08F-4FF6-801B-E892411F9F6A}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SeeJit", "SeeJit\SeeJit.csproj", "{3EFE7C18-8B8B-4C61-9CE5-18F828412502}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -25,6 +27,10 @@ Global
 		{C8632330-C08F-4FF6-801B-E892411F9F6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C8632330-C08F-4FF6-801B-E892411F9F6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C8632330-C08F-4FF6-801B-E892411F9F6A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3EFE7C18-8B8B-4C61-9CE5-18F828412502}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3EFE7C18-8B8B-4C61-9CE5-18F828412502}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3EFE7C18-8B8B-4C61-9CE5-18F828412502}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3EFE7C18-8B8B-4C61-9CE5-18F828412502}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -32,6 +38,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{7C05AE6A-FBA5-4E6D-8F2E-97590D16994E} = {812A5213-D40E-4155-9CE7-525634925A63}
 		{C8632330-C08F-4FF6-801B-E892411F9F6A} = {B402C577-01BD-41EF-B204-67F47AB15ACB}
+		{3EFE7C18-8B8B-4C61-9CE5-18F828412502} = {812A5213-D40E-4155-9CE7-525634925A63}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {02092F6C-6C35-4B4A-966C-58867C92802A}
