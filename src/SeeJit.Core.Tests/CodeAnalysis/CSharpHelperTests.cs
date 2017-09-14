@@ -402,6 +402,7 @@ namespace Ns1.Ns2
     {
         void MyMethod<T>(T t) { }
         T2 MyMethod<T1, T2>(T1 t1) { return default(T2); }
+        void MyMethod<T>(T a, T b) { }
     }
 }";
                 var members = Collect(code);
@@ -411,7 +412,23 @@ namespace Ns1.Ns2
 
                 var methodItems = members[0].Children;
 
-                Assert.Equal(2, methodItems.Count);
+                Assert.Equal(3, methodItems.Count);
+
+                var method0 = Assert.IsAssignableFrom<MethodInfo>(methodItems[0].Value);
+                var method1 = Assert.IsAssignableFrom<MethodInfo>(methodItems[1].Value);
+                var method2 = Assert.IsAssignableFrom<MethodInfo>(methodItems[2].Value);
+
+                Assert.Equal(1, method0.GetGenericArguments().Length);
+                Assert.Equal(1, method0.GetParameters().Length);
+                Assert.Equal(typeof(void), method0.ReturnType);
+
+                Assert.Equal(2, method1.GetGenericArguments().Length);
+                Assert.Equal(1, method1.GetParameters().Length);
+                Assert.Equal("T2", method1.ReturnType.Name);
+
+                Assert.Equal(1, method2.GetGenericArguments().Length);
+                Assert.Equal(2, method2.GetParameters().Length);
+                Assert.Equal(typeof(void), method2.ReturnType);
             }
 
             [Fact]
