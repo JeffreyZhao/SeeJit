@@ -133,17 +133,35 @@
 
         private static MethodBase FindMethod(Dictionary<string, object> allMethods, SemanticModel model, CSharpSyntaxNode node)
         {
+            // Here's a workaround to resolve the issue of explicit implementation for interfaces.
+            // We remove the target method after being found, so if we find the methods with the
+            // same order of adding them, the result would be correct. Please note this approach
+            // is not reliable since it needs Type.GetMembers() method to returns the member with
+            // the order in declarations. It works temporarily but needs to be fixed.
+
             var methodName = GetMethodName(node);
             var methodOrList = allMethods[methodName];
 
             var overloads = methodOrList as List<MethodBase>;
             if (overloads == null)
+            {
+                allMethods.Remove(methodName); // workaround
                 return (MethodBase)methodOrList;
+            }
 
             Debug.Assert(overloads.Count > 1);
 
             var symbol = (IMethodSymbol)model.GetDeclaredSymbol(node);
-            return overloads.Find(m => symbol.IsSame(m));
+            var method = overloads.Find(m => symbol.IsSame(m));
+
+            // workaround
+            overloads.Remove(method);
+            if (overloads.Count == 1)
+            {
+                allMethods[methodName] = overloads[0];
+            }
+
+            return method;
         }
 
         private static Dictionary<string, object> GetAllMethods(Type type, ref Dictionary<string, object> allMethods)
@@ -155,6 +173,13 @@
                 foreach (var method in type.GetMembers(BindingFlags).OfType<MethodBase>().Where(m => !m.IsCompilerGenerated()))
                 {
                     var methodName = method.Name;
+
+                    var dotIndex = methodName.LastIndexOf('.');
+                    if (dotIndex > 0) // explicit interface implementation
+                    {
+                        methodName = methodName.Substring(dotIndex + 1);
+                    }
+
                     if (method.IsGenericMethod)
                     {
                         methodName = methodName + "`" + method.GetGenericArguments().Length;

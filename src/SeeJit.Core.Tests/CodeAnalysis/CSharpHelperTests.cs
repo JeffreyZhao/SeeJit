@@ -159,6 +159,39 @@ class MyClass {
             }
 
             [Fact]
+            public void InterfaceMethods()
+            {
+                var code = @"
+interface IMyClass
+{
+    void MyMethod();
+}
+
+class MyClass : IMyClass
+{
+    void MyMethod() { }
+
+    void IMyClass.MyMethod() { }
+}";
+                var items = Collect(code);
+
+                Assert.Equal(1, items.Count);
+
+                var methodItems = items[0].Children;
+
+                Assert.Equal(2, methodItems.Count);
+
+                var method0 = Assert.IsType<MethodDeclarationSyntax>(methodItems[0].Value);
+                var method1 = Assert.IsType<MethodDeclarationSyntax>(methodItems[1].Value);
+
+                Assert.Equal("MyMethod", method0.Identifier.Text);
+                Assert.Null(method0.ExplicitInterfaceSpecifier);
+
+                Assert.Equal("MyMethod", method0.Identifier.Text);
+                Assert.NotNull(method1.ExplicitInterfaceSpecifier);
+            }
+
+            [Fact]
             public void Properites()
             {
                 var code = @"
@@ -464,6 +497,43 @@ namespace Ns1.Ns2
                 Assert.Equal(1, method2.GetGenericArguments().Length);
                 Assert.Equal(2, method2.GetParameters().Length);
                 Assert.Equal(typeof(void), method2.ReturnType);
+            }
+
+            [Fact]
+            public void InterfaceMethods()
+            {
+                var code = @"
+namespace MyNamespace
+{
+    interface IMyClass<T>
+    {
+        void MyMethod();
+    }
+
+    class MyClass : IMyClass<int>, IMyClass<string>
+    {
+        void IMyClass<string>.MyMethod() { }
+
+        void MyMethod() { }
+
+        void IMyClass<int>.MyMethod() { }
+    }
+}";
+                var items = Collect(code);
+
+                Assert.Equal(1, items.Count);
+
+                var methodItems = items[0].Children;
+
+                Assert.Equal(3, methodItems.Count);
+
+                var method0 = Assert.IsAssignableFrom<MethodInfo>(methodItems[0].Value);
+                var method1 = Assert.IsAssignableFrom<MethodInfo>(methodItems[1].Value);
+                var method2 = Assert.IsAssignableFrom<MethodInfo>(methodItems[2].Value);
+
+                Assert.Equal("MyNamespace.IMyClass<System.String>.MyMethod", method0.Name);
+                Assert.Equal("MyMethod", method1.Name);
+                Assert.Equal("MyNamespace.IMyClass<System.Int32>.MyMethod", method2.Name);
             }
 
             [Fact]
