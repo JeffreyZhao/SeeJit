@@ -12,10 +12,9 @@
 
     public static class SeeJitHelper
     {
-        private static List<Disassembler> GetFileDisassemblers(DisassembleFileOptions options, TextWriter output)
+        private static List<Disassembler> GetFileDisassemblers(DisassembleFileOptions options, MessageWriter writer)
         {
             var begin = DateTime.Now;
-            var writer = options.IsVerbose ? MessageWriter.From(output) : MessageWriter.Empty;
 
             // Parsing
 
@@ -55,15 +54,17 @@
 
         public static void DisassembleFile(DisassembleFileOptions options, TextWriter output)
         {
+            var writer = options.IsVerbose ? MessageWriter.From(output) : MessageWriter.Empty;
+
             List<Disassembler> disassemblers;
 
             try
             {
-                disassemblers = GetFileDisassemblers(options, output);
+                disassemblers = GetFileDisassemblers(options, writer);
             }
             catch
             {
-                output.WriteLine("failed!");
+                writer.WriteLine("failed!");
 
                 throw;
             }
