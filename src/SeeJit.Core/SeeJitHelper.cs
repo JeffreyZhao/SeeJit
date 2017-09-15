@@ -30,7 +30,7 @@
             writer.Write("; Compiling ... ");
 
             var assemblyName = Path.GetFileNameWithoutExtension(options.FilePath);
-            var compilation = CSharpCompiler.Compile(assemblyName, syntaxTree, options.DisableOptimization);
+            var (_, assembly) = CSharpCompiler.Compile(assemblyName, syntaxTree, options.DisableOptimization);
             var compiled = DateTime.Now;
 
             writer.WriteLine($"done. ({Diff(parsed, compiled)})");
@@ -40,9 +40,7 @@
             writer.Write("; Analyzing ... ");
 
             var syntaxItems = CSharpHelper.CollectSyntax(syntaxTree.GetRoot());
-            var assembly = AppDomain.CurrentDomain.GetAssemblies().Last(a => a.GetName().Name == assemblyName);
-            var semanticModel = compilation.GetSemanticModel(syntaxTree);
-            var memberItems = CSharpHelper.CollectMembers(assembly, semanticModel, syntaxItems);
+            var memberItems = CSharpHelper.CollectMembers(assembly, syntaxItems);
             var disassemblers = memberItems.Select(Disassembler.Create).ToList();
             var analyzed = DateTime.Now;
 

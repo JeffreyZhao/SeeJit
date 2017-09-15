@@ -286,11 +286,10 @@ class MyClass
             {
                 var assemblyName = Guid.NewGuid().ToString();
                 var syntaxTree = CSharpCompiler.ParseText(code);
-                var compilation = CSharpCompiler.Compile(assemblyName, syntaxTree);
-                var assembly = AppDomain.CurrentDomain.GetAssemblies().Single(a => a.GetName().Name == assemblyName);
+                var (_, assembly) = CSharpCompiler.Compile(assemblyName, syntaxTree);
                 var syntaxItems = CSharpHelper.CollectSyntax(syntaxTree.GetRoot());
 
-                return CSharpHelper.CollectMembers(assembly, compilation.GetSemanticModel(syntaxTree), syntaxItems);
+                return CSharpHelper.CollectMembers(assembly, syntaxItems);
             }
 
             [Fact]

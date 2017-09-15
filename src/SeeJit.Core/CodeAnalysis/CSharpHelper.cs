@@ -82,16 +82,14 @@
             }
         }
 
-        private static readonly BindingFlags BindingFlags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
-
-        public static List<TreeItem<MemberInfo>> CollectMembers(Assembly assembly, SemanticModel model, List<TreeItem<CSharpSyntaxNode>> syntaxItems)
+        public static List<TreeItem<MemberInfo>> CollectMembers(Assembly assembly, List<TreeItem<CSharpSyntaxNode>> syntaxItems)
         {
             var list = new List<TreeItem<MemberInfo>>(syntaxItems.Count);
 
             foreach (var item in syntaxItems)
             {
                 var type = GetType(assembly, (TypeDeclarationSyntax)item.Value);
-                var children = CollectMembers(type, model, item.Children);
+                var children = CollectMembers(type, item.Children);
 
                 list.Add(new TreeItem<MemberInfo>(type, children));
             }
@@ -99,110 +97,75 @@
             return list;
         }
 
-        private static List<TreeItem<MemberInfo>> CollectMembers(Type parentType, SemanticModel model, List<TreeItem<CSharpSyntaxNode>> syntaxItems)
+        private const BindingFlags MemberBindingFlags = 
+            BindingFlags.Instance |
+            BindingFlags.Static |
+            BindingFlags.Public |
+            BindingFlags.NonPublic |
+            BindingFlags.DeclaredOnly;
+
+        private static List<TreeItem<MemberInfo>> CollectMembers(Type parentType, List<TreeItem<CSharpSyntaxNode>> syntaxItems)
         {
             var list = new List<TreeItem<MemberInfo>>(syntaxItems.Count);
-
-            Dictionary<string, object> allMethods = null;
+            var methods = (MethodsOfType)null;
 
             foreach (var item in syntaxItems)
             {
-                list.Add(GetMemberItem(parentType, model, item, ref allMethods));
+                list.Add(GetMemberItem(parentType, item, ref methods));
             }
 
             return list;
         }
 
-        private static TreeItem<MemberInfo> GetMemberItem(Type parentType, SemanticModel model, TreeItem<CSharpSyntaxNode> syntaxItem, ref Dictionary<string, object> allMethods)
+        private static TreeItem<MemberInfo> GetMemberItem(Type parentType, TreeItem<CSharpSyntaxNode> syntaxItem, ref MethodsOfType methods)
         {
             var syntax = syntaxItem.Value;
 
             var typeDecl = syntax as TypeDeclarationSyntax;
             if (typeDecl != null)
             {
-                var type = parentType.GetNestedType(GetTypeName(typeDecl), BindingFlags);
-                var children = CollectMembers(type, model, syntaxItem.Children);
+                var type = parentType.GetNestedType(GetTypeName(typeDecl), MemberBindingFlags);
+                var children = CollectMembers(type, syntaxItem.Children);
 
                 return new TreeItem<MemberInfo>(type, children);
             }
 
-            var method = FindMethod(GetAllMethods(parentType, ref allMethods), model, syntax);
+            var method = FindMethod(syntax, parentType, ref methods);
 
             return new TreeItem<MemberInfo>(method);
         }
 
-        private static MethodBase FindMethod(Dictionary<string, object> allMethods, SemanticModel model, CSharpSyntaxNode node)
+        private static MethodBase FindMethod(CSharpSyntaxNode node, Type type, ref MethodsOfType methods)
         {
-            // Here's a workaround to resolve the issue of explicit implementation for interfaces.
-            // We remove the target method after being found, so if we find the methods with the
-            // same order of adding them, the result would be correct. Please note this approach
-            // is not reliable since it needs Type.GetMembers() method to returns the member with
-            // the order in declarations. It works temporarily but needs to be fixed.
-
-            var methodName = GetMethodName(node);
-            var methodOrList = allMethods[methodName];
-
-            var overloads = methodOrList as List<MethodBase>;
-            if (overloads == null)
+            if (methods == null)
             {
-                allMethods.Remove(methodName); // workaround
-                return (MethodBase)methodOrList;
+                methods = new MethodsOfType(type);
             }
+            
+            // Here's a trick to keep the order of overloaded methods. The trick relies on an
+            // implementation detail of Type.GetMembers() method, that it returns the methods
+            // with the same order in declaration. So if we group by methods by their names,
+            // and find them with the declaration order, we'll get the correct result without
+            // comparing symbols to the methods.
 
-            Debug.Assert(overloads.Count > 1);
-
-            var symbol = (IMethodSymbol)model.GetDeclaredSymbol(node);
-            var method = overloads.Find(m => symbol.IsSame(m));
-
-            // workaround
-            overloads.Remove(method);
-            if (overloads.Count == 1)
-            {
-                allMethods[methodName] = overloads[0];
-            }
-
-            return method;
+            return methods[GetMethodName(node)].Dequeue();
         }
 
-        private static Dictionary<string, object> GetAllMethods(Type type, ref Dictionary<string, object> allMethods)
+        private class MethodsOfType : Dictionary<string, Queue<MethodBase>>
         {
-            if (allMethods == null)
+            public MethodsOfType(Type type)
             {
-                allMethods = new Dictionary<string, object>();
+                var methodsByName = type
+                    .GetMembers(MemberBindingFlags)
+                    .OfType<MethodBase>()
+                    .Where(m => !m.IsCompilerGenerated())
+                    .GroupBy(GetMethodName);
 
-                foreach (var method in type.GetMembers(BindingFlags).OfType<MethodBase>().Where(m => !m.IsCompilerGenerated()))
+                foreach (var group in methodsByName)
                 {
-                    var methodName = method.Name;
-
-                    var dotIndex = methodName.LastIndexOf('.');
-                    if (dotIndex > 0) // explicit interface implementation
-                    {
-                        methodName = methodName.Substring(dotIndex + 1);
-                    }
-
-                    if (method.IsGenericMethod)
-                    {
-                        methodName = methodName + "`" + method.GetGenericArguments().Length;
-                    }
-
-                    if (!allMethods.TryGetValue(methodName, out object methodOrList))
-                    {
-                        allMethods.Add(methodName, method);
-                        continue;
-                    }
-
-                    var list = methodOrList as List<MethodBase>;
-                    if (list != null)
-                    {
-                        list.Add(method);
-                        continue;
-                    }
-
-                    allMethods[methodName] = new List<MethodBase> { (MethodBase)methodOrList, method };
+                    Add(group.Key, new Queue<MethodBase>(group));
                 }
             }
-
-            return allMethods;
         }
 
         private static Type GetType(Assembly assembly, TypeDeclarationSyntax node)
@@ -228,6 +191,24 @@
                 return node.Identifier.Text;
 
             return node.Identifier.Text + "`" + node.TypeParameterList.Parameters.Count;
+        }
+
+        private static string GetMethodName(MethodBase method)
+        {
+            var methodName = method.Name;
+
+            var dotIndex = methodName.LastIndexOf('.');
+            if (dotIndex > 0) // explicit implementation of an interface method
+            {
+                methodName = methodName.Substring(dotIndex + 1);
+            }
+
+            if (method.IsGenericMethod)
+            {
+                methodName = methodName + "`" + method.GetGenericArguments().Length;
+            }
+
+            return methodName;
         }
 
         private static string GetMethodName(CSharpSyntaxNode node)

@@ -22,7 +22,7 @@
             }
         }
 
-        public static CSharpCompilation Compile(string assemblyName, CSharpSyntaxTree syntaxTree, bool disableOptimization = false)
+        public static (CSharpCompilation, Assembly) Compile(string assemblyName, CSharpSyntaxTree syntaxTree, bool disableOptimization = false)
         {
             var references = new MetadataReference[]
             {
@@ -44,9 +44,9 @@
                 if (!result.Success)
                     throw new CompilationException(result.Diagnostics);
 
-                Assembly.Load(ms.ToArray());
+                var assembly = Assembly.Load(ms.ToArray());
 
-                return compilation;
+                return (compilation, assembly);
             }
         }
     }
