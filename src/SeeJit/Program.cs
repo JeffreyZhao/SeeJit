@@ -1,13 +1,18 @@
 ﻿namespace SeeJit
 {
     using System;
+    using System.IO;
     using System.Linq;
+    using System.Runtime;
     using CommandLine;
 
     class Program
     {
         static void Main(string[] args)
         {
+            ProfileOptimization.SetProfileRoot(Path.GetDirectoryName(typeof(Program).Assembly.Location));
+            ProfileOptimization.StartProfile("Startup.Profile");
+
             var parseResult = Parser.Default.ParseArguments<Options>(args);
             if (parseResult.Errors.Any())
                 return;
