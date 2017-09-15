@@ -210,6 +210,41 @@ class MyClass {
                 Assert.Equal("get", property1Getter.Keyword.Text);
                 Assert.Equal("Property3", Assert.IsType<PropertyDeclarationSyntax>(property3Getter.Parent.Parent).Identifier.Text);
             }
+
+            [Fact]
+            public void Indexers()
+            {
+                var code = @"
+class MyClass
+{
+    int this[int i]
+    {
+        get { return i; }
+        set { }
+    }
+
+    string this[int i, int j]
+    {
+        get { return (i + j).ToString(); }
+    }
+}";
+                var memberItems = Collect(code);
+
+                Assert.Equal(1, memberItems.Count);
+
+                var accessorItems = memberItems[0].Children;
+
+                Assert.Equal(3, accessorItems.Count);
+
+                var getter0 = Assert.IsAssignableFrom<AccessorDeclarationSyntax>(accessorItems[0].Value);
+                var setter0 = Assert.IsAssignableFrom<AccessorDeclarationSyntax>(accessorItems[1].Value);
+                var getter1 = Assert.IsAssignableFrom<AccessorDeclarationSyntax>(accessorItems[2].Value);
+
+                Assert.Same(getter0.Parent, setter0.Parent);
+                Assert.Equal(1, Assert.IsAssignableFrom<IndexerDeclarationSyntax>(getter0.Parent.Parent).ParameterList.Parameters.Count);
+
+                Assert.Equal(2, Assert.IsAssignableFrom<IndexerDeclarationSyntax>(getter1.Parent.Parent).ParameterList.Parameters.Count);
+            }
         }
 
         public class CollectMembers
@@ -461,6 +496,45 @@ namespace Ns1.Ns2
                 Assert.Equal("get_MyProperty1", Assert.IsAssignableFrom<MethodInfo>(propertyItems[0].Value).Name);
                 Assert.Equal("set_MyProperty1", Assert.IsAssignableFrom<MethodInfo>(propertyItems[1].Value).Name);
                 Assert.Equal("get_MyProperty2", Assert.IsAssignableFrom<MethodInfo>(propertyItems[2].Value).Name);
+            }
+
+            [Fact]
+            public void Indexers()
+            {
+                var code = @"
+class MyClass
+{
+    double this[int i]
+    {
+        get { return i; }
+        set { }
+    }
+
+    string this[int i, decimal j]
+    {
+        get { return (i + j).ToString(); }
+    }
+}";
+                var memberItems = Collect(code);
+
+                Assert.Equal(1, memberItems.Count);
+
+                var accessorItems = memberItems[0].Children;
+
+                Assert.Equal(3, accessorItems.Count);
+
+                var accessor0 = Assert.IsAssignableFrom<MethodInfo>(accessorItems[0].Value);
+                var accessor1 = Assert.IsAssignableFrom<MethodInfo>(accessorItems[1].Value);
+                var accessor2 = Assert.IsAssignableFrom<MethodInfo>(accessorItems[2].Value);
+
+                Assert.Equal(typeof(double), accessor0.ReturnType);
+                Assert.Equal(new[] { typeof(int) }, accessor0.GetParameters().Select(p => p.ParameterType));
+
+                Assert.Equal(typeof(void), accessor1.ReturnType);
+                Assert.Equal(new[] { typeof(int), typeof(double) }, accessor1.GetParameters().Select(p => p.ParameterType));
+
+                Assert.Equal(typeof(string), accessor2.ReturnType);
+                Assert.Equal(new[]{typeof(int), typeof(decimal)}, accessor2.GetParameters().Select(p => p.ParameterType));
             }
         }
     }

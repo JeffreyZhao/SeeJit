@@ -126,32 +126,14 @@
                 return new TreeItem<MemberInfo>(type, children);
             }
 
-            var ctorDecl = syntax as ConstructorDeclarationSyntax;
-            if (ctorDecl != null)
-            {
-                var isStatic = ctorDecl.Modifiers.Any(m => m.Kind() == SyntaxKind.StaticKeyword);
-                var ctor = isStatic
-                    ? (MemberInfo)GetAllMethods(parentType, ref allMethods)[".cctor"]
-                    : FindMethod(GetAllMethods(parentType, ref allMethods), model, ctorDecl);
+            var method = FindMethod(GetAllMethods(parentType, ref allMethods), model, syntax);
 
-                return new TreeItem<MemberInfo>(ctor);
-            }
-
-            var methodDecl = syntax as MethodDeclarationSyntax;
-            if (methodDecl != null)
-            {
-                var method = FindMethod(GetAllMethods(parentType, ref allMethods), model, methodDecl);
-                return new TreeItem<MemberInfo>(method);
-            }
-
-            var accessorName = GetAccessorName((AccessorDeclarationSyntax)syntax);
-            return new TreeItem<MemberInfo>((MethodBase)GetAllMethods(parentType, ref allMethods)[accessorName]);
+            return new TreeItem<MemberInfo>(method);
         }
 
-        private static MethodBase FindMethod(Dictionary<string, object> allMethods, SemanticModel model, BaseMethodDeclarationSyntax syntax)
+        private static MethodBase FindMethod(Dictionary<string, object> allMethods, SemanticModel model, CSharpSyntaxNode node)
         {
-            var methodDecl = syntax as MethodDeclarationSyntax;
-            var methodName = methodDecl == null ? ".ctor" : GetMethodName(methodDecl);
+            var methodName = GetMethodName(node);
             var methodOrList = allMethods[methodName];
 
             var overloads = methodOrList as List<MethodBase>;
@@ -160,7 +142,7 @@
 
             Debug.Assert(overloads.Count > 1);
 
-            var symbol = model.GetDeclaredSymbol(syntax);
+            var symbol = (IMethodSymbol)model.GetDeclaredSymbol(node);
             return overloads.Find(m => symbol.IsSame(m));
         }
 
@@ -223,6 +205,23 @@
             return node.Identifier.Text + "`" + node.TypeParameterList.Parameters.Count;
         }
 
+        private static string GetMethodName(CSharpSyntaxNode node)
+        {
+            var methodDecl = node as MethodDeclarationSyntax;
+            if (methodDecl != null)
+                return GetMethodName(methodDecl);
+
+            var accessorDecl = node as AccessorDeclarationSyntax;
+            if (accessorDecl != null)
+                return GetAccessorName(accessorDecl);
+
+            var ctorDecl = node as ConstructorDeclarationSyntax;
+            if (ctorDecl != null)
+                return GetConsturctorName(ctorDecl);
+
+            throw new NotSupportedException("Unsupported node type: " + node.GetType().Name);
+        }
+
         private static string GetMethodName(MethodDeclarationSyntax node)
         {
             if (node.TypeParameterList == null)
@@ -233,9 +232,20 @@
 
         private static string GetAccessorName(AccessorDeclarationSyntax node)
         {
-            var propertyName = ((PropertyDeclarationSyntax)node.Parent.Parent).Identifier;
             var prefix = node.Kind() == SyntaxKind.GetAccessorDeclaration ? "get_" : "set_";
+
+            var indexerDecl = node.Parent.Parent as IndexerDeclarationSyntax;
+            if (indexerDecl != null)
+                return prefix + "Item";
+
+            var propertyName = ((PropertyDeclarationSyntax)node.Parent.Parent).Identifier;
             return prefix + propertyName;
+        }
+
+        private static string GetConsturctorName(ConstructorDeclarationSyntax node)
+        {
+            var isStatic = node.Modifiers.Any(m => m.Kind() == SyntaxKind.StaticKeyword);
+            return isStatic ? ".cctor" : ".ctor";
         }
     }
 }
