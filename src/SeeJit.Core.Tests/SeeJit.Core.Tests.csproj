@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net47</TargetFramework>
+    <TargetFramework>net452</TargetFramework>
     <RootNamespace>SeeJit.Tests</RootNamespace>
     <Company>Jeffrey Zhao</Company>
     <Authors>Jeffrey Zhao</Authors>
