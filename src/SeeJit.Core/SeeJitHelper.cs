@@ -29,8 +29,14 @@
 
             writer.Write("; Compiling ... ");
 
+            var compilationOptions = new CompilationOptions
+            {
+                SaveAssembly = options.SaveAssembly,
+                DisableOptimization = options.DisableOptimization
+            };
+
             var assemblyName = Path.GetFileNameWithoutExtension(options.FilePath);
-            var (_, assembly) = CSharpCompiler.Compile(assemblyName, syntaxTree, options.DisableOptimization);
+            var (_, assembly) = CSharpCompiler.Compile(assemblyName, syntaxTree, compilationOptions);
             var compiled = DateTime.Now;
 
             writer.WriteLine($"done. ({Diff(parsed, compiled)})");
@@ -128,6 +134,8 @@
     public class DisassembleFileOptions : DisassembleOptions
     {
         public string FilePath { get; set; }
+
+        public bool SaveAssembly { get; set; }
 
         public bool DisableOptimization { get; set; }
     }

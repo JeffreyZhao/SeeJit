@@ -22,15 +22,17 @@
             }
         }
 
-        public static (CSharpCompilation, Assembly) Compile(string assemblyName, CSharpSyntaxTree syntaxTree, bool disableOptimization = false)
+        public static (CSharpCompilation, Assembly) Compile(string assemblyName, CSharpSyntaxTree syntaxTree, CompilationOptions options = null)
         {
+            options = options ?? CompilationOptions.Default;
+
             var references = new MetadataReference[]
             {
                 MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(Enumerable).Assembly.Location)
             };
 
-            var optimizationLevel = disableOptimization ? OptimizationLevel.Debug : OptimizationLevel.Release;
+            var optimizationLevel = options.DisableOptimization ? OptimizationLevel.Debug : OptimizationLevel.Release;
 
             var compilation = CSharpCompilation.Create(
                 assemblyName,
@@ -44,10 +46,26 @@
                 if (!result.Success)
                     throw new CompilationException(result.Diagnostics);
 
-                var assembly = Assembly.Load(ms.ToArray());
+                var data = ms.ToArray();
+
+                if (options.SaveAssembly)
+                {
+                    File.WriteAllBytes(assemblyName + ".dll", data);
+                }
+
+                var assembly = Assembly.Load(data);
 
                 return (compilation, assembly);
             }
         }
+    }
+
+    internal class CompilationOptions
+    {
+        public static readonly CompilationOptions Default = new CompilationOptions();
+
+        public bool SaveAssembly { get; set; }
+
+        public bool DisableOptimization { get; set; }
     }
 }

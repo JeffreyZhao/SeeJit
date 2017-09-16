@@ -22,6 +22,7 @@
             var fileOptions = new DisassembleFileOptions
             {
                 FilePath = options.FilePath,
+                SaveAssembly = options.SaveAssembly,
                 DisableOptimization = options.DisableOptimization,
                 IsVerbose = options.IsVerbose
             };
@@ -43,6 +44,9 @@
     {
         [Option('f', "file", Required = true, HelpText = "Source file to be compiled and disassembled.")]
         public string FilePath { get; set; }
+
+        [Option('s', "save", HelpText = "Save compiled assembly to disk.")]
+        public bool SaveAssembly { get; set; }
 
         [Option('d', "disable-optimization", HelpText = "Disable optimization when compiling source file.")]
         public bool DisableOptimization { get; set; }
