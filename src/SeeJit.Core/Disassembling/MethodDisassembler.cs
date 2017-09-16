@@ -22,7 +22,7 @@
 
         public override void Disassemble(ClrRuntime runtime, TextWriter writer)
         {
-            var method = runtime.GetMethodByAddress((ulong)Method.MethodHandle.GetFunctionPointer());
+            var method = FindCompiledMethod(runtime, Method);
             if (method == null)
             {
                 writer.Write("; Failed to load method '");
@@ -64,6 +64,24 @@
             {
                 PrintInstruction(writer, ins, addressPrinter, bytesColumnWidth, translater);
             }
+        }
+
+        private static ClrMethod FindCompiledMethod(ClrRuntime runtime, MethodBase methodInfo)
+        {
+            var method = runtime.GetMethodByAddress((ulong)methodInfo.MethodHandle.GetFunctionPointer());
+            if (method == null)
+                return null;
+
+            if (method.CompilationType != MethodCompilationType.None)
+                return method;
+
+            foreach (var other in method.Type.Methods)
+            {
+                if (other.MetadataToken == method.MetadataToken && other.CompilationType != MethodCompilationType.None)
+                    return other;
+            }
+
+            return method;
         }
 
         private static List<Instruction> Disassemble(ulong methodAddress, uint methodSize, ArchitectureMode arch)
