@@ -23,6 +23,34 @@
         public override void Disassemble(ClrRuntime runtime, TextWriter writer)
         {
             var method = runtime.GetMethodByAddress((ulong)Method.MethodHandle.GetFunctionPointer());
+            if (method == null)
+            {
+                writer.Write("; Failed to load method '");
+
+                var declaringType = Method.DeclaringType;
+                if (declaringType != null)
+                {
+                    writer.Write(declaringType.FullName);
+                    writer.Write('.');
+                }
+
+                writer.Write(Method.Name);
+                writer.WriteLine("'.");
+
+                return;
+            }
+
+            writer.Write("; ");
+            writer.WriteLine(method.GetFullSignature());
+
+            if (method.CompilationType == MethodCompilationType.None)
+            {
+                writer.WriteLine("; Failed to JIT compile this method.");
+                writer.WriteLine("; Please see https://github.com/JeffreyZhao/SeeJit/issues/1 for more details.");
+
+                return;
+            }
+
             var methodAddress = method.HotColdInfo.HotStart;
             var methodSize = method.HotColdInfo.HotSize;
             var arch = runtime.ClrInfo.DacInfo.TargetArchitecture == Architecture.X86 ? ArchitectureMode.x86_32 : ArchitectureMode.x86_64;
@@ -31,9 +59,6 @@
             var bytesColumnWidth = maxBytesLength * 2 + 2;
             var addressPrinter = arch == ArchitectureMode.x86_32 ? AddressPrinter.Short : AddressPrinter.Long;
             var translater = GetTranslater(runtime, addressPrinter);
-
-            writer.Write("; ");
-            writer.WriteLine(method.GetFullSignature());
 
             foreach (var ins in instructions)
             {
