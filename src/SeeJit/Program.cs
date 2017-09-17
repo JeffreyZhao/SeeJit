@@ -48,7 +48,7 @@
         [Option('s', "save", HelpText = "Save compiled assembly to disk.")]
         public bool SaveAssembly { get; set; }
 
-        [Option('d', "disable-optimization", HelpText = "Disable optimization when compiling source file.")]
+        [Option('d', "debug", HelpText = "Disable optimization when compiling source file.")]
         public bool DisableOptimization { get; set; }
 
         [Option('v', "verbose", HelpText = "Print verbose messages.")]
